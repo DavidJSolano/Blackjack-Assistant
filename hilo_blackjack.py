@@ -1,6 +1,7 @@
-from shuffling_deck import Card, generate_deck, shuffle_all_decks
-from blackjack import convert_to_tuples, calculate_hand_value, display_hand
-from collections import deque
+import tkinter as tk
+from tkinter import messagebox
+from shuffling_deck import generate_deck, shuffle_all_decks
+from blackjack import convert_to_tuples, calculate_hand_value
 
 # Hi-Lo card counting values
 hilo_values = {
@@ -9,7 +10,7 @@ hilo_values = {
     '10': -1, 'J': -1, 'Q': -1, 'K': -1, 'A': -1
 }
 
-# Updates the running count based on the given hand.
+# Calculate running count based on hand
 def calculate_running_count(hand, running_count):
     for card in hand:
         rank = card[0]
@@ -17,179 +18,143 @@ def calculate_running_count(hand, running_count):
             running_count += hilo_values[rank]
     return running_count
 
-# Converts running count to true count based on the number of remaining decks.
+# Calculate true count based on remaining decks
 def true_count(running_count, remaining_decks):
     if remaining_decks == 0:
         return running_count
     return running_count / remaining_decks
 
-# Recommends an action based on the true count.
+# Provide action recommendation based on Hi-Lo strategy
 def recommend_hilo_action(player_hand, dealer_hand, running_count, remaining_decks):
     true_count_value = true_count(running_count, remaining_decks)
     player_value = calculate_hand_value(player_hand)
-    dealer_up_card = dealer_hand[0][0]  # Dealer's visible card
+    dealer_up_card = dealer_hand[0][0]
 
-    # Adjust thresholds for hitting and standing based on true count
     if true_count_value >= 2:
-        # Favor standing more if true count is highly positive
-        if player_value >= 12:
-            return "stand"
-        else:
-            return "hit"
+        return "Stand" if player_value >= 12 else "Hit"
     elif true_count_value >= 1:
-        # Slightly favorable count: Be more aggressive
-        if player_value <= 15:
-            return "hit"
-        else:
-            return "stand"
+        return "Hit" if player_value <= 15 else "Stand"
     else:
-        # Negative or neutral count: Be more conservative
         if player_value >= 13 or (player_value >= 12 and dealer_up_card in ['2', '3', '4', '5', '6']):
-            return "stand"
+            return "Stand"
         else:
-            return "hit"
+            return "Hit"
 
-# Generate and shuffle decks
-def play_blackjack_hilo(num_decks=1):
-    all_decks = []
-    for _ in range(num_decks):
-        all_decks.extend(generate_deck())
-    shuffled_deck = shuffle_all_decks(all_decks)
-    deck = convert_to_tuples(shuffled_deck)
+# GUI Class
+class BlackjackGUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Blackjack with Hi-Lo Card Counting")
+        self.initialize_game()
+        self.create_widgets()
+        self.start_game()
 
-    # Initialize hands and running count
-    player_hand = [deck.pop()]
-    dealer_hand = [deck.pop()]
-    player_hand.append(deck.pop())
-    dealer_hand.append(deck.pop())
+    # Initialize game variables
+    def initialize_game(self):
+        self.deck = []
+        self.running_count = 0
+        self.remaining_decks = 0
+        self.player_hand = []
+        self.dealer_hand = []
 
-    # Initialize running count based on initial hands
-    running_count = calculate_running_count(player_hand + dealer_hand, 0)
+    # Create GUI Widgets
+    def create_widgets(self):
+        # Dealer Section
+        tk.Label(self.root, text="Dealer's Hand:", font=("Helvetica", 14)).pack(pady=5)
+        self.dealer_hand_label = tk.Label(self.root, text="", font=("Helvetica", 14))
+        self.dealer_hand_label.pack(pady=5)
+        self.dealer_rank_label = tk.Label(self.root, text="Dealer's Hand Rank: ", font=("Helvetica", 12))
+        self.dealer_rank_label.pack(pady=5)
 
-    print("Dealer's hand:")
-    display_hand(dealer_hand, hide_first_card=True)
+        # Player Section
+        tk.Label(self.root, text="Your Hand:", font=("Helvetica", 14)).pack(pady=5)
+        self.player_hand_label = tk.Label(self.root, text="", font=("Helvetica", 14))
+        self.player_hand_label.pack(pady=5)
+        self.player_rank_label = tk.Label(self.root, text="Your Hand Rank: ", font=("Helvetica", 12))
+        self.player_rank_label.pack(pady=5)
 
-    print("Your hand:", calculate_hand_value(player_hand))
-    display_hand(player_hand)
+        # Recommendation Section
+        self.recommendation_label = tk.Label(self.root, text="Recommendation: ", font=("Helvetica", 14, "bold"), fg="blue")
+        self.recommendation_label.pack(pady=10)
 
-    # Player's turn
-    while calculate_hand_value(player_hand) < 21:
-        remaining_decks = len(deck) // 52
-        recommendation = recommend_hilo_action(player_hand, dealer_hand, running_count, remaining_decks)
-        print(f"Recommendation based on Hi-Lo: {recommendation}")
-        move = input(f"Do you want to hit or stand? (Recommended: {recommendation}) ").lower()
-        if move == 'hit':
-            new_card = deck.pop()
-            player_hand.append(new_card)
-            running_count = calculate_running_count([new_card], running_count)
-            print("Your hand:", calculate_hand_value(player_hand))
-            display_hand(player_hand)
-        elif move == 'stand':
-            break
+        # Buttons Section
+        button_frame = tk.Frame(self.root)
+        button_frame.pack(pady=10)
+        self.hit_button = tk.Button(button_frame, text="Hit", command=self.hit)
+        self.hit_button.pack(side=tk.LEFT, padx=10)
+        self.stand_button = tk.Button(button_frame, text="Stand", command=self.stand)
+        self.stand_button.pack(side=tk.LEFT, padx=10)
+
+    # Start the game
+    def start_game(self):
+        self.deck = shuffle_all_decks(generate_deck())
+        self.deck = convert_to_tuples(self.deck)
+        self.remaining_decks = len(self.deck) // 52
+        self.player_hand = [self.deck.pop(), self.deck.pop()]
+        self.dealer_hand = [self.deck.pop(), self.deck.pop()]
+        self.running_count = calculate_running_count(self.player_hand + self.dealer_hand, 0)
+        self.update_display()
+
+    # Update game display
+    def update_display(self):
+        # Format the card hands with clear space between rank and suit
+        self.dealer_hand_label.config(text=f"{self.dealer_hand[0][0]} of {self.dealer_hand[0][1]} [Hidden]")
+        self.player_hand_label.config(text=", ".join([f"{card[0]} of {card[1]}" for card in self.player_hand]))
+        
+        # Display the hand rank (sum of hand values)
+        self.dealer_rank_label.config(text=f"Dealer's Hand Rank: {calculate_hand_value(self.dealer_hand)}")
+        self.player_rank_label.config(text=f"Your Hand Rank: {calculate_hand_value(self.player_hand)}")
+        
+        # Show the recommendation based on Hi-Lo system
+        self.recommendation_label.config(text=f"Recommendation: {recommend_hilo_action(self.player_hand, self.dealer_hand, self.running_count, self.remaining_decks)}")
+
+    # Handle Hit action
+    def hit(self):
+        new_card = self.deck.pop()
+        self.player_hand.append(new_card)
+        self.running_count = calculate_running_count([new_card], self.running_count)
+        self.update_display()
+
+        if calculate_hand_value(self.player_hand) > 21:
+            messagebox.showinfo("Game Over", "You busted! Dealer wins.")
+            self.end_game()
+
+    # Handle Stand action
+    def stand(self):
+        self.dealer_hand_label.config(text=", ".join([f"{card[0]} of {card[1]}" for card in self.dealer_hand]))
+        while calculate_hand_value(self.dealer_hand) < 17:
+            new_card = self.deck.pop()
+            self.dealer_hand.append(new_card)
+            self.running_count = calculate_running_count([new_card], self.running_count)
+        self.update_display()
+        self.check_winner()
+
+    # Check winner
+    def check_winner(self):
+        player_value = calculate_hand_value(self.player_hand)
+        dealer_value = calculate_hand_value(self.dealer_hand)
+        if dealer_value > 21 or player_value > dealer_value:
+            messagebox.showinfo("Game Over", "You win!")
+        elif player_value < dealer_value:
+            messagebox.showinfo("Game Over", "Dealer wins!")
         else:
-            print("Invalid input. Please enter 'hit' or 'stand'.")
+            messagebox.showinfo("Game Over", "It's a tie!")
+        self.end_game()
 
-    player_value = calculate_hand_value(player_hand)
-    if player_value > 21:
-        print("You busted! Dealer wins.")
-        return "lose"
+    # End game and disable buttons
+    def end_game(self):
+        self.hit_button.config(state=tk.DISABLED)
+        self.stand_button.config(state=tk.DISABLED)
+        tk.Button(self.root, text="Restart", command=self.restart_game).pack(pady=10)
 
-    # Dealer's turn
-    print("Dealer's hand:")
-    display_hand(dealer_hand)
-    while calculate_hand_value(dealer_hand) < 17:
-        new_card = deck.pop()
-        dealer_hand.append(new_card)
-        running_count = calculate_running_count([new_card], running_count)
-        print("Dealer's hand:")
-        display_hand(dealer_hand)
-
-    dealer_value = calculate_hand_value(dealer_hand)
-    if dealer_value > 21:
-        print("Dealer busted! You win.")
-        return "win"
-
-    # Final evaluation
-    if player_value > dealer_value:
-        print("You win!")
-        return "win"
-    elif player_value < dealer_value:
-        print("Dealer wins.")
-        return "lose"
-    else:
-        print("It's a tie!")
-        return "tie"
-
-def play_hilo_with_recommendations(num_decks=1):
-    all_decks = []
-    for _ in range(num_decks):
-        all_decks.extend(generate_deck())
-    shuffled_deck = shuffle_all_decks(all_decks)
-    deck = convert_to_tuples(shuffled_deck)
-
-    # Initialize hands and running count
-    player_hand = [deck.pop()]
-    dealer_hand = [deck.pop()]
-    player_hand.append(deck.pop())
-    dealer_hand.append(deck.pop())
-
-    # Initialize running count based on initial hands
-    running_count = calculate_running_count(player_hand + dealer_hand, 0)
-
-    print("Dealer's hand:")
-    display_hand(dealer_hand, hide_first_card=True)
-
-    print("Your hand:", calculate_hand_value(player_hand))
-    display_hand(player_hand)
-
-    # Player's turn
-    while calculate_hand_value(player_hand) < 21:
-        remaining_decks = len(deck) // 52
-        recommendation = recommend_hilo_action(player_hand, dealer_hand, running_count, remaining_decks)
-        print(f"Recommendation based on Hi-Lo: {recommendation}")
-        move = recommendation
-        if move == 'hit':
-            new_card = deck.pop()
-            player_hand.append(new_card)
-            running_count = calculate_running_count([new_card], running_count)
-            print("Your hand:", calculate_hand_value(player_hand))
-            display_hand(player_hand)
-        elif move == 'stand':
-            break
-        else:
-            print("Invalid input. Please enter 'hit' or 'stand'.")
-
-    player_value = calculate_hand_value(player_hand)
-    if player_value > 21:
-        print("You busted! Dealer wins.")
-        return "lose"
-
-    # Dealer's turn
-    print("Dealer's hand:")
-    display_hand(dealer_hand)
-    while calculate_hand_value(dealer_hand) < 17:
-        new_card = deck.pop()
-        dealer_hand.append(new_card)
-        running_count = calculate_running_count([new_card], running_count)
-        print("Dealer's hand:")
-        display_hand(dealer_hand)
-
-    dealer_value = calculate_hand_value(dealer_hand)
-    if dealer_value > 21:
-        print("Dealer busted! You win.")
-        return "win"
-
-    # Final evaluation
-    if player_value > dealer_value:
-        print("You win!")
-        return "win"
-    elif player_value < dealer_value:
-        print("Dealer wins.")
-        return "lose"
-    else:
-        print("It's a tie!")
-        return "tie"
+    # Restart the game
+    def restart_game(self):
+        self.root.destroy()
+        root = tk.Tk()
+        BlackjackGUI(root)
+        root.mainloop()
 
 if __name__ == "__main__":
-    result = play_blackjack_hilo()
-    print(result)
+    root = tk.Tk()
+    BlackjackGUI(root)
+    root.mainloop()
