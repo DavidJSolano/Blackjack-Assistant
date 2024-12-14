@@ -63,19 +63,3 @@ pip install -r requirements.txt
 ```python
 python3 pyqt_blackjack.py
 ```
-
-## File Structure
-
-```
-blackjack-assistant/
-│
-├── .gitignore           # Files to ignore in Git
-├── README.md            # Project documentation
-├── README.txt            # Project documentation (txt)
-├── blackjack.py         # Core Blackjack logic
-├── gui_blackjack.py     # Tkinter-based GUI (deprecated)
-├── pyqt_blackjack.py    # PyQt-based GUI (main application)
-├── shuffling_deck.py    # Card shuffling and deck management
-├── requirements.txt     # Python dependencies
-└── venv/                # Virtual environment directory (generated locally)
-```
