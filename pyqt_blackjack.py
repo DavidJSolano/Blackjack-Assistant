@@ -189,7 +189,7 @@ class BlackjackGUI(QWidget):
         self.button_frame.layout().addWidget(restart_button)
 
     def restart_game(self):
-        # Close current window and open a new one
+        # Show new window first, then close current
         self.new_window = BlackjackGUI()
         self.new_window.show()
         self.close()
