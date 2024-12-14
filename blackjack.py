@@ -25,10 +25,15 @@ def display_hand(hand, hide_first_card=False):
         print("[hidden]", hand[1])
     else:
         for card in hand:
-            print(card, end=" ")
+            print(f"{card[0]} of {card[1]}", end=" | ")
         print()
 
 def play_blackjack(num_decks=3):
+    print("Welcome to Blackjack!")
+    print("Try to get as close to 21 as possible without going over!")
+    print("You can 'hit' to take another card or 'stand' to keep your current hand.")
+    print("-" * 50)
+
     all_decks = []
     for _ in range(num_decks):
         all_decks.extend(generate_deck())
@@ -40,18 +45,19 @@ def play_blackjack(num_decks=3):
     player_hand.append(deck.pop())
     dealer_hand.append(deck.pop())
 
-    print("Dealer's hand:")
+    print("\nDealer's hand:")
     display_hand(dealer_hand, hide_first_card=True)
 
-    print("Your hand:", calculate_hand_value(player_hand))
+    print("\nYour hand (value:", calculate_hand_value(player_hand), "):")
     display_hand(player_hand)
 
     # Player's turn
     while calculate_hand_value(player_hand) < 21:
-        move = input("Do you want to 'hit' or 'stand'? ").lower()
+        move = input("Enter 'hit' or 'stand': ").lower()
         if move == 'hit':
             player_hand.append(deck.pop())
-            print("Your hand:", calculate_hand_value(player_hand))
+            print("\nYou drew:", f"{player_hand[-1][0]} of {player_hand[-1][1]}")
+            print("Your hand (value:", calculate_hand_value(player_hand), "):")
             display_hand(player_hand)
         elif move == 'stand':
             break
@@ -60,17 +66,22 @@ def play_blackjack(num_decks=3):
 
     player_value = calculate_hand_value(player_hand)
     if player_value > 21:
-        print("You busted! Dealer wins.")
+        print("\nYou busted! Dealer wins.")
         return
 
-    print("Dealer's hand:")
+    print("\nDealer's hand revealed:")
     display_hand(dealer_hand)
     while calculate_hand_value(dealer_hand) < 17:
         dealer_hand.append(deck.pop())
-        print("Dealer's hand:")
+        print("Dealer draws:", f"{dealer_hand[-1][0]} of {dealer_hand[-1][1]}")
+        print("Dealer's hand (value:", calculate_hand_value(dealer_hand), "):")
         display_hand(dealer_hand)
 
     dealer_value = calculate_hand_value(dealer_hand)
+
+    print("\nFinal Results:")
+    print("Your value:", player_value)
+    print("Dealer value:", dealer_value)
 
     if dealer_value > 21 or player_value > dealer_value:
         print("You win!")
