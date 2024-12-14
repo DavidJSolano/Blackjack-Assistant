@@ -53,18 +53,35 @@ class BlackjackGUI:
         self.dealer_hand = []
 
     def create_widgets(self):
+        # Title Label
+        title_label = tk.Label(self.root, text="Blackjack with Hi-Lo Card Counting", font=("Helvetica", 16, "bold"))
+        title_label.pack(pady=10)
+
+        # Instruction Label
+        instruction_label = tk.Label(self.root, text="Try to get as close to 21 as possible without going over.\n"
+                                                     "Hi-Lo recommendations are provided to guide your decisions.",
+                                     font=("Helvetica", 10))
+        instruction_label.pack(pady=5)
+
+        # Frames for dealer and player
+        dealer_frame = tk.Frame(self.root, bd=2, relief=tk.GROOVE, padx=10, pady=10)
+        dealer_frame.pack(pady=10)
+
+        player_frame = tk.Frame(self.root, bd=2, relief=tk.GROOVE, padx=10, pady=10)
+        player_frame.pack(pady=10)
+
         # Dealer Section
-        tk.Label(self.root, text="Dealer's Hand:", font=("Helvetica", 14)).pack(pady=5)
-        self.dealer_hand_label = tk.Label(self.root, text="", font=("Helvetica", 14))
+        tk.Label(dealer_frame, text="Dealer's Hand:", font=("Helvetica", 14, "bold")).pack(pady=5)
+        self.dealer_hand_label = tk.Label(dealer_frame, text="", font=("Helvetica", 14))
         self.dealer_hand_label.pack(pady=5)
-        self.dealer_rank_label = tk.Label(self.root, text="Dealer's Hand Rank: ", font=("Helvetica", 12))
+        self.dealer_rank_label = tk.Label(dealer_frame, text="Dealer's Hand Rank: ", font=("Helvetica", 12))
         self.dealer_rank_label.pack(pady=5)
 
         # Player Section
-        tk.Label(self.root, text="Your Hand:", font=("Helvetica", 14)).pack(pady=5)
-        self.player_hand_label = tk.Label(self.root, text="", font=("Helvetica", 14))
+        tk.Label(player_frame, text="Your Hand:", font=("Helvetica", 14, "bold")).pack(pady=5)
+        self.player_hand_label = tk.Label(player_frame, text="", font=("Helvetica", 14))
         self.player_hand_label.pack(pady=5)
-        self.player_rank_label = tk.Label(self.root, text="Your Hand Rank: ", font=("Helvetica", 12))
+        self.player_rank_label = tk.Label(player_frame, text="Your Hand Rank: ", font=("Helvetica", 12))
         self.player_rank_label.pack(pady=5)
 
         # Recommendation Section
@@ -72,11 +89,13 @@ class BlackjackGUI:
         self.recommendation_label.pack(pady=10)
 
         # Buttons Section
-        button_frame = tk.Frame(self.root)
-        button_frame.pack(pady=10)
-        self.hit_button = tk.Button(button_frame, text="Hit", command=self.hit)
+        self.button_frame = tk.Frame(self.root)
+        self.button_frame.pack(pady=10)
+
+        self.hit_button = tk.Button(self.button_frame, text="Hit", command=self.hit)
         self.hit_button.pack(side=tk.LEFT, padx=10)
-        self.stand_button = tk.Button(button_frame, text="Stand", command=self.stand)
+
+        self.stand_button = tk.Button(self.button_frame, text="Stand", command=self.stand)
         self.stand_button.pack(side=tk.LEFT, padx=10)
 
     def start_game(self):
@@ -130,13 +149,17 @@ class BlackjackGUI:
     def end_game(self):
         self.hit_button.config(state=tk.DISABLED)
         self.stand_button.config(state=tk.DISABLED)
-        tk.Button(self.root, text="Restart", command=self.restart_game).pack(pady=10)
+
+        # Add the Restart button into the existing button_frame for consistent layout
+        restart_button = tk.Button(self.button_frame, text="Restart", command=self.restart_game)
+        restart_button.pack(side=tk.LEFT, padx=10)
 
     def restart_game(self):
+        # Destroy the current window and create a new one
         self.root.destroy()
-        root = tk.Tk()
-        BlackjackGUI(root)
-        root.mainloop()
+        new_root = tk.Tk()
+        BlackjackGUI(new_root)
+        new_root.mainloop()
 
 if __name__ == "__main__":
     root = tk.Tk()
